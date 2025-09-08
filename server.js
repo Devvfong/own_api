@@ -3,7 +3,7 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// Serve static HTML files from public folder
+// Serve static files from public folder
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use(express.json());
@@ -37,6 +37,11 @@ app.delete("/photos/:id", (req, res) => {
   if (index === -1) return res.status(404).json({ error: "Photo not found" });
   const deleted = photos.splice(index, 1);
   res.json(deleted[0]);
+});
+
+// Fallback route to serve index.html for base URL
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public/index.html"));
 });
 
 // Start server
