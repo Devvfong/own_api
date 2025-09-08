@@ -17,14 +17,15 @@ app.get("/photos", (req, res) => res.json(photos));
 
 app.post("/photos", (req, res) => {
   const { title, url } = req.body;
-  if (!title || !url) return res.status(400).json({ error: "Title & URL required" });
+  if (!title || !url)
+    return res.status(400).json({ error: "Title & URL required" });
   const newPhoto = { id: nextId++, title, url };
   photos.push(newPhoto);
   res.status(201).json(newPhoto);
 });
 
 app.put("/photos/:id", (req, res) => {
-  const photo = photos.find(p => p.id === parseInt(req.params.id));
+  const photo = photos.find((p) => p.id === parseInt(req.params.id));
   if (!photo) return res.status(404).json({ error: "Photo not found" });
   const { title, url } = req.body;
   if (title) photo.title = title;
@@ -33,15 +34,15 @@ app.put("/photos/:id", (req, res) => {
 });
 
 app.delete("/photos/:id", (req, res) => {
-  const index = photos.findIndex(p => p.id === parseInt(req.params.id));
+  const index = photos.findIndex((p) => p.id === parseInt(req.params.id));
   if (index === -1) return res.status(404).json({ error: "Photo not found" });
   const deleted = photos.splice(index, 1);
   res.json(deleted[0]);
 });
 
 // Fallback route to serve index.html for base URL
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public/index.html"));
+app.get("/view.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public/view.html"));
 });
 
 // Start server
