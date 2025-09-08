@@ -1,53 +1,41 @@
 const express = require("express");
+const path = require("path");
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 
-// Middleware to parse JSON
+// Serve static HTML files from public folder
+app.use(express.static(path.join(__dirname, "public")));
+
 app.use(express.json());
 
-// In-memory data storage
-let items = [];
+// In-memory photo storage
+let photos = [];
 let nextId = 1;
 
-// ✅ CREATE - add new item
-app.post("/items", (req, res) => {
-  const { name } = req.body;
-  if (!name) return res.status(400).json({ error: "Name is required" });
+// API routes
+app.get("/photos", (req, res) => res.json(photos));
 
-  const newItem = { id: nextId++, name };
-  items.push(newItem);
-  res.status(201).json(newItem);
+app.post("/photos", (req, res) => {
+  const { title, url } = req.body;
+  if (!title || !url) return res.status(400).json({ error: "Title & URL required" });
+  const newPhoto = { id: nextId++, title, url };
+  photos.push(newPhoto);
+  res.status(201).json(newPhoto);
 });
 
-// ✅ READ - get all items
-app.get("/items", (req, res) => {
-  res.json(items);
+app.put("/photos/:id", (req, res) => {
+  const photo = photos.find(p => p.id === parseInt(req.params.id));
+  if (!photo) return res.status(404).json({ error: "Photo not found" });
+  const { title, url } = req.body;
+  if (title) photo.title = title;
+  if (url) photo.url = url;
+  res.json(photo);
 });
 
-// ✅ READ - get one item by id
-app.get("/", (req, res) => {
-  res.json({ message: "API is working!" });
-});
-
-
-// ✅ UPDATE - update item by id
-app.put("/items/:id", (req, res) => {
-  const item = items.find(i => i.id === parseInt(req.params.id));
-  if (!item) return res.status(404).json({ error: "Item not found" });
-
-  const { name } = req.body;
-  if (!name) return res.status(400).json({ error: "Name is required" });
-
-  item.name = name;
-  res.json(item);
-});
-
-// ✅ DELETE - remove item by id
-app.delete("/items/:id", (req, res) => {
-  const index = items.findIndex(i => i.id === parseInt(req.params.id));
-  if (index === -1) return res.status(404).json({ error: "Item not found" });
-
-  const deleted = items.splice(index, 1);
+app.delete("/photos/:id", (req, res) => {
+  const index = photos.findIndex(p => p.id === parseInt(req.params.id));
+  if (index === -1) return res.status(404).json({ error: "Photo not found" });
+  const deleted = photos.splice(index, 1);
   res.json(deleted[0]);
 });
 
