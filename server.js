@@ -25,11 +25,10 @@ app.get("/items", (req, res) => {
 });
 
 // ✅ READ - get one item by id
-app.get("/items/:id", (req, res) => {
-  const item = items.find(i => i.id === parseInt(req.params.id));
-  if (!item) return res.status(404).json({ error: "Item not found" });
-  res.json(item);
+app.get("/", (req, res) => {
+  res.json({ message: "API is working!" });
 });
+
 
 // ✅ UPDATE - update item by id
 app.put("/items/:id", (req, res) => {
