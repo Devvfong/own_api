@@ -1,43 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Upload Photo</title>
-<script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload Photo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center py-8">
 
-<h1 class="text-3xl font-bold mb-6">Upload Photo</h1>
+<body class="bg-violet-900 min-h-screen flex flex-col items-center justify-center py-8 text-white">
 
-<form id="uploadForm" class="flex flex-col items-center gap-4">
-    <input type="text" id="title" placeholder="Photo Title" class="border rounded-lg p-2 w-64" required>
-    <input type="file" id="fileInput" accept="image/*" class="border rounded-lg p-2 w-64" required>
-    <button type="submit" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition">Upload</button>
-</form>
+  <h1 class="text-3xl font-bold mb-6">Upload Photos</h1>
 
-<script>
-const API_URL = "https://own-api-bee4.onrender.com/photos";
+  <form id="uploadForm" class="flex flex-col items-center gap-4">
+    <input type="text" id="title" placeholder="Photo Title (optional)" 
+           class="border rounded-lg p-2 w-64 text-black">
+    <input type="file" id="fileInput" accept="image/*" multiple 
+           class="border rounded-lg p-2 w-64 text-black" required>
+    <button type="submit"
+      class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition">Upload</button>
+  </form>
 
-document.getElementById("uploadForm").addEventListener("submit", async e => {
-    e.preventDefault();
-    const title = document.getElementById("title").value;
-    const file = document.getElementById("fileInput").files[0];
-    if (!file) return alert("Select a file");
+  <script>
+    const API_URL = "https://own-api-bee4.onrender.com/photos";
 
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-        const res = await fetch(API_URL, {
+    document.getElementById("uploadForm").addEventListener("submit", async e => {
+      e.preventDefault();
+      const title = document.getElementById("title").value || "Untitled";
+      const files = document.getElementById("fileInput").files;
+      if (!files.length) return alert("Select at least one file");
+
+      for (let file of files) {
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          await fetch(API_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ title, url: reader.result })
-        });
-        if (res.ok) window.location.href = "view.html"; // navigate to view page
-        else alert("Upload failed");
-    };
-    reader.readAsDataURL(file); // convert image to base64
-});
-</script>
+          });
+        };
+        reader.readAsDataURL(file);
+      }
+
+      // redirect after uploading all
+      setTimeout(() => window.location.href = "view.html", 1500);
+    });
+  </script>
 
 </body>
 </html>
