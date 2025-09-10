@@ -27,9 +27,35 @@ app.post("/photos", (req, res) => {
   photos.push(newPhoto);
   res.status(201).json(newPhoto);
 });
+app.get("/photos", (req, res) => res.json(photos));
+app.get("/photos/:id", (req, res) => {
+  const photo = photos.find((p) => p.id === parseInt(req.params.id));
+  if (!photo) return res.status(404).json({ error: "Not found" });
+  res.json(photo);
+});
+app.post("/photos", (req, res) => {
+  const { title, url } = req.body;
+  if (!title || !url) return res.status(400).json({ error: "Missing fields" });
+  const newPhoto = { id: photos.length + 1, title, url };
+  photos.push(newPhoto);
+  res.status(201).json(newPhoto);
+});
+app.put("/photos/:id", (req, res) => {
+  const id = parseInt(req.params.id);
+  const photo = photos.find((p) => p.id === id);
+  if (!photo) return res.status(404).json({ error: "Not found" });
+  const { title, url } = req.body;
+  if (title) photo.title = title;
+  if (url) photo.url = url;
+  res.json(photo);
+});
+app.delete("/photos/:id", (req, res) => {
+  photos = photos.filter((p) => p.id !== parseInt(req.params.id));
+  res.json({ message: "Deleted" });
+});
 
 app.delete("/photos/:id", (req, res) => {
-  photos = photos.filter(p => p.id !== parseInt(req.params.id));
+  photos = photos.filter((p) => p.id !== parseInt(req.params.id));
   res.json({ message: "Deleted" });
 });
 
