@@ -1,51 +1,55 @@
-const express = require("express");
-const path = require("path");
+import express from "express";
+
 const app = express();
-const PORT = process.env.PORT || 10000;
-// server.js
-const cors = require("cors");
-app.use(cors()); // allow all origins
+app.use(express.json()); // so we can parse JSON in requests
 
-app.use(express.json());
+// Example "database" (in-memory)
+let photos = [
+  { id: 1, title: "Sunset", url: "https://example.com/sunset.jpg" },
+  { id: 2, title: "Beach", url: "https://example.com/beach.jpg" },
+];
 
-// Serve static files
-app.use(express.static(path.join(__dirname, "public")));
+// --- CRUD Endpoints ---
 
-// In-memory storage
-let photos = [];
-let nextId = 1;
-
-// GET all photos
+// GET all
 app.get("/photos", (req, res) => {
   res.json(photos);
 });
 
-// POST new photo
+// GET one
+app.get("/photos/:id", (req, res) => {
+  const photo = photos.find(p => p.id === parseInt(req.params.id));
+  photo ? res.json(photo) : res.status(404).json({ error: "Not found" });
+});
+
+// POST (create new)
 app.post("/photos", (req, res) => {
-  const { title, url } = req.body;
-  if (!title || !url) return res.status(400).json({ error: "Title & URL required" });
-  const newPhoto = { id: nextId++, title, url };
+  const newPhoto = {
+    id: photos.length + 1,
+    title: req.body.title,
+    url: req.body.url,
+  };
   photos.push(newPhoto);
   res.status(201).json(newPhoto);
 });
 
-// PUT update photo
+// PUT (update existing)
 app.put("/photos/:id", (req, res) => {
   const photo = photos.find(p => p.id === parseInt(req.params.id));
-  if (!photo) return res.status(404).json({ error: "Photo not found" });
-  const { title, url } = req.body;
-  if (title) photo.title = title;
-  if (url) photo.url = url;
+  if (!photo) return res.status(404).json({ error: "Not found" });
+
+  photo.title = req.body.title ?? photo.title;
+  photo.url = req.body.url ?? photo.url;
   res.json(photo);
 });
 
-// DELETE photo
+// DELETE
 app.delete("/photos/:id", (req, res) => {
-  const index = photos.findIndex(p => p.id === parseInt(req.params.id));
-  if (index === -1) return res.status(404).json({ error: "Photo not found" });
-  const deleted = photos.splice(index, 1);
-  res.json(deleted[0]);
+  const id = parseInt(req.params.id);
+  photos = photos.filter(p => p.id !== id);
+  res.json({ message: "Deleted" });
 });
 
 // Start server
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`API running on port ${PORT}`));
