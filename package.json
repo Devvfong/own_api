@@ -2,13 +2,13 @@
   "name": "own_api",
   "version": "1.0.0",
   "type": "module",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "ejs": "^3.1.10",
-    "express": "^4.18.2",
-    "update": "^0.7.4"
+    "ejs": "^3.1.9",
+    "express": "^4.18.2"
   }
 }
