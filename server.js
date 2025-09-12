@@ -2,7 +2,9 @@ import express from "express";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
+import fs from "fs";
 
+const products = JSON.parse(fs.readFileSync("./data/products.json", "utf-8"));
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: "15mb" }));
@@ -16,13 +18,28 @@ app.set("views", path.join(__dirname, "views"));
 let photos = [];
 
 // GET all
-app.get("/photos", (req, res) => res.json(photos));
+// app.get("/photos", (req, res) => res.json(photos));
+
+// // GET one
+// app.get("/photos/:id", (req, res) => {
+//   const photo = photos.find((p) => p.id === parseInt(req.params.id));
+//   if (!photo) return res.status(404).json({ error: "Not found" });
+//   res.json(photo);
+// });
+// PRODUCTS API
+
+// GET all
+app.get("data/products.json", (req, res) => {
+  res.json(products);
+});
 
 // GET one
-app.get("/photos/:id", (req, res) => {
-  const photo = photos.find(p => p.id === parseInt(req.params.id));
-  if (!photo) return res.status(404).json({ error: "Not found" });
-  res.json(photo);
+app.get("data/products.json/:id", (req, res) => {
+  const product = products.products.find(
+    (p) => p.id === parseInt(req.params.id)
+  );
+  if (!product) return res.status(404).json({ error: "Not found" });
+  res.json(product);
 });
 
 // POST (add)
@@ -37,7 +54,7 @@ app.post("/photos", (req, res) => {
 // PUT (edit)
 app.put("/photos/:id", (req, res) => {
   const id = parseInt(req.params.id);
-  const photo = photos.find(p => p.id === id);
+  const photo = photos.find((p) => p.id === id);
   if (!photo) return res.status(404).json({ error: "Not found" });
 
   const { title, url } = req.body;
@@ -49,7 +66,7 @@ app.put("/photos/:id", (req, res) => {
 
 // DELETE
 app.delete("/photos/:id", (req, res) => {
-  photos = photos.filter(p => p.id !== parseInt(req.params.id));
+  photos = photos.filter((p) => p.id !== parseInt(req.params.id));
   res.json({ message: "Deleted" });
 });
 
