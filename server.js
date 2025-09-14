@@ -35,12 +35,17 @@ app.get("/photos/:id", (req, res) => {
 
 app.post("/photos", (req, res) => {
   const { title, url } = req.body;
-  if (!url || typeof url !== "string" || !/^https?:\/\//.test(url)) {
+  if (
+    !url ||
+    typeof url !== "string" ||
+    (!/^https?:\/\//.test(url) && !/^data:image\//.test(url))
+  ) {
     return res.status(400).json({ error: "Invalid or missing image URL" });
   }
   const newPhoto = {
     id: generateId(),
-    title: typeof title === "string" && title.trim() ? title.trim() : "Untitled",
+    title:
+      typeof title === "string" && title.trim() ? title.trim() : "Untitled",
     url: url.trim(),
   };
   photos.push(newPhoto);
@@ -53,7 +58,12 @@ app.put("/photos/:id", (req, res) => {
 
   const { title, url } = req.body;
   if (title && typeof title === "string") photo.title = title.trim();
-  if (url && typeof url === "string" && /^https?:\/\//.test(url)) photo.url = url.trim();
+  if (
+    url &&
+    typeof url === "string" &&
+    (/^https?:\/\//.test(url) || /^data:image\//.test(url))
+  )
+    photo.url = url.trim();
 
   res.json(photo);
 });
@@ -93,6 +103,6 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: "Internal server error" });
 });
-// ...existing code...
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

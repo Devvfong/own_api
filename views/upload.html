@@ -8,43 +8,178 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="bg-violet-900 min-h-screen flex flex-col items-center justify-center py-8 text-white">
+<body class="bg-gradient-to-br from-violet-900 via-violet-800 to-indigo-900 min-h-screen text-white relative">
+  <div aria-hidden="true"
+    class="pointer-events-none absolute inset-0 bg-[length:24px_24px] bg-repeat opacity-20 bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22 viewBox=%220 0 24 24%22%3E%3Ccircle cx=%221%22 cy=%221%22 r=%221%22 fill=%22%23ffffff%22 fill-opacity=%220.12%22/%3E%3C/svg%3E')]">
+  </div>
+  <!-- Top Nav -->
+  <header class="sticky top-0 bg-violet-900/70 backdrop-blur border-b border-white/10 relative z-10">
+    <div class="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
+      <a href="/" class="font-bold tracking-wide">PhotoApp</a>
+      <nav class="space-x-4 text-sm">
+        <a href="/" class="hover:text-purple-200">Upload</a>
+        <a href="/view" class="hover:text-purple-200">Gallery</a>
+      </nav>
+    </div>
+  </header>
 
-  <h1 class="text-3xl font-bold mb-6">Upload Photos</h1>
+  <main class="max-w-3xl mx-auto px-4 py-10 relative z-10">
+    <div class="bg-white/5 border border-white/10 rounded-2xl shadow-xl p-6">
+      <h1 class="text-3xl font-bold mb-2">Upload Photos</h1>
+      <p class="text-white/70 mb-6">Choose files or drag and drop images below. Supported: PNG, JPG, GIF, WebP.</p>
 
-  <form id="uploadForm" class="flex flex-col items-center gap-4">
-    <input type="text" id="title" placeholder="Photo Title (optional)" class="border rounded-lg p-2 w-64 text-black">
-    <input type="file" id="fileInput" accept="image/*" multiple class="border rounded-lg p-2 w-64 text-black" required>
-    <button type="submit"
-      class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition">Upload</button>
-  </form>
+      <form id="uploadForm" class="space-y-5">
+        <div class="grid gap-4 sm:grid-cols-2">
+          <input type="text" id="title" placeholder="Photo Title (optional)"
+            class="border border-white/10 bg-white/10 placeholder-white/60 rounded-lg p-3 w-full text-white outline-none focus:ring-2 focus:ring-purple-400">
+          <button id="selectBtn" type="button"
+            class="bg-purple-600 text-white px-4 py-3 rounded-lg hover:bg-purple-700 transition w-full sm:w-auto">Select
+            Files</button>
+        </div>
+
+        <input type="file" id="fileInput" accept="image/*" multiple class="hidden">
+
+        <div id="dropzone"
+          class="rounded-xl border-2 border-dashed border-white/20 bg-white/5 hover:border-purple-400/60 transition p-8 text-center cursor-pointer">
+          <div class="text-white/80">Drag & Drop images here or click "Select Files"</div>
+        </div>
+
+        <div id="preview" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
+
+        <div class="flex items-center gap-3">
+          <button id="uploadBtn" type="submit"
+            class="bg-emerald-600 text-white px-5 py-2.5 rounded-lg hover:bg-emerald-700 transition disabled:opacity-60 disabled:cursor-not-allowed">
+            <span class="inline" id="uploadText">Upload</span>
+            <span class="hidden" id="uploadSpinner">
+              <svg class="animate-spin h-5 w-5 inline ml-2 text-white" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+              </svg>
+            </span>
+          </button>
+          <span id="count" class="text-white/70 text-sm">No files selected</span>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-4 right-4 bg-black/80 text-white px-4 py-3 rounded-lg shadow-lg hidden"></div>
 
   <script>
-    const API_URL = "/photos"; // Use relative URL for local/prod
+    const API_URL = "/photos"; // relative URL
 
-    document.getElementById("uploadForm").addEventListener("submit", async e => {
-      e.preventDefault();
-      const title = document.getElementById("title").value || "Untitled";
-      const files = document.getElementById("fileInput").files;
-      if (!files.length) return alert("Select at least one file");
+    const dropzone = document.getElementById("dropzone");
+    const fileInput = document.getElementById("fileInput");
+    const selectBtn = document.getElementById("selectBtn");
+    const preview = document.getElementById("preview");
+    const count = document.getElementById("count");
+    const form = document.getElementById("uploadForm");
+    const uploadBtn = document.getElementById("uploadBtn");
+    const uploadText = document.getElementById("uploadText");
+    const uploadSpinner = document.getElementById("uploadSpinner");
+    const toast = document.getElementById("toast");
 
-      for (let file of files) {
+    let selectedFiles = [];
+
+    function showToast(msg, type = "info") {
+      toast.textContent = msg;
+      toast.classList.remove("hidden");
+      toast.className = `fixed bottom-4 right-4 px-4 py-3 rounded-lg shadow-lg ${type === 'error' ? 'bg-red-600' : 'bg-emerald-600'}`;
+      setTimeout(() => toast.classList.add("hidden"), 1800);
+    }
+
+    function updateCount() {
+      count.textContent = selectedFiles.length ? `${selectedFiles.length} file(s) selected` : "No files selected";
+    }
+
+    function renderPreview() {
+      preview.innerHTML = selectedFiles.map((file, idx) => {
+        const url = URL.createObjectURL(file);
+        return `
+        <div class="relative group aspect-square bg-white/5 rounded-lg border border-white/10">
+          <img src="${url}" class="absolute inset-0 w-full h-full object-contain" alt="preview-${idx}">
+          <button data-index="${idx}" class="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition">Remove</button>
+        </div>`;
+      }).join("");
+    }
+
+    selectBtn.addEventListener("click", () => fileInput.click());
+
+    fileInput.addEventListener("change", (e) => {
+      selectedFiles = Array.from(e.target.files || []);
+      updateCount();
+      renderPreview();
+    });
+
+    dropzone.addEventListener("click", () => fileInput.click());
+
+    ["dragover", "dragleave", "drop"].forEach(evt => {
+      dropzone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (evt === "dragover") dropzone.classList.add("border-purple-400");
+        if (evt === "dragleave") dropzone.classList.remove("border-purple-400");
+        if (evt === "drop") {
+          dropzone.classList.remove("border-purple-400");
+          const files = Array.from(e.dataTransfer.files || []).filter(f => f.type.startsWith("image/"));
+          selectedFiles = files;
+          updateCount();
+          renderPreview();
+        }
+      });
+    });
+
+    preview.addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-index]");
+      if (!btn) return;
+      const idx = Number(btn.getAttribute("data-index"));
+      selectedFiles.splice(idx, 1);
+      updateCount();
+      renderPreview();
+    });
+
+    function readFileAsDataURL(file) {
+      return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onloadend = async () => {
-          await fetch(API_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ title, url: reader.result })
-          });
-        };
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
         reader.readAsDataURL(file);
-      }
+      });
+    }
 
-      // redirect after uploading all
-      setTimeout(() => window.location.href = "view.html", 1500);
+    async function uploadOne(file, title) {
+      const dataUrl = await readFileAsDataURL(file);
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, url: dataUrl })
+      });
+      if (!res.ok) throw new Error(`Upload failed (${res.status})`);
+      return res.json();
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!selectedFiles.length) return alert("Select at least one file");
+      uploadBtn.disabled = true;
+      uploadText.textContent = "Uploading...";
+      uploadSpinner.classList.remove("hidden");
+      try {
+        const title = document.getElementById("title").value || "Untitled";
+        await Promise.all(selectedFiles.map(f => uploadOne(f, title)));
+        showToast("Upload successful");
+        setTimeout(() => window.location.href = "/view", 800);
+      } catch (err) {
+        console.error(err);
+        showToast(err.message || "Upload failed", "error");
+      } finally {
+        uploadBtn.disabled = false;
+        uploadText.textContent = "Upload";
+        uploadSpinner.classList.add("hidden");
+      }
     });
   </script>
-
 </body>
 
 </html>

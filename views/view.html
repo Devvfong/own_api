@@ -1,33 +1,82 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>View Photos</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-violet-900 min-h-screen flex flex-col items-center py-8 text-white">
-  <h1 class="text-3xl font-bold mb-6">Uploaded Photos</h1>
-  <div id="photos" class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl"></div>
-  <a href="upload.html" class="mt-8 underline text-purple-300 hover:text-purple-100">Upload More Photos</a>
+
+<body class="bg-gradient-to-br from-violet-900 via-violet-800 to-indigo-900 min-h-screen text-white relative">
+  <div aria-hidden="true"
+    class="pointer-events-none absolute inset-0 bg-[length:24px_24px] bg-repeat opacity-20 bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22 viewBox=%220 0 24 24%22%3E%3Ccircle cx=%221%22 cy=%221%22 r=%221%22 fill=%22%23ffffff%22 fill-opacity=%220.12%22/%3E%3C/svg%3E')]">
+  </div>
+  <!-- Top Nav -->
+  <header class="sticky top-0 bg-violet-900/70 backdrop-blur border-b border-white/10 relative z-10">
+    <div class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
+      <a href="/" class="font-bold tracking-wide">PhotoApp</a>
+      <nav class="space-x-4 text-sm">
+        <a href="/" class="hover:text-purple-200">Upload</a>
+        <a href="/view" class="hover:text-purple-200">Gallery</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-10 w-full relative z-10">
+    <h1 class="text-3xl font-bold mb-6">Uploaded Photos</h1>
+    <div id="photos" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
+  </main>
+
+  <template id="cardTpl">
+    <div class="bg-white/5 border border-white/10 rounded-2xl overflow-hidden shadow-xl">
+      <div class="aspect-square bg-white/5 animate-pulse" data-skeleton></div>
+      <img class="hidden w-full h-full object-cover" data-img />
+      <div class="p-4">
+        <div class="font-semibold" data-title></div>
+      </div>
+    </div>
+  </template>
+
   <script>
     const API_URL = "/photos";
-    async function loadPhotos() {
-      const res = await fetch(API_URL);
-      const photos = await res.json();
-      const container = document.getElementById("photos");
-      if (!photos.length) {
-        container.innerHTML = "<p class='text-center col-span-3'>No photos uploaded yet.</p>";
-        return;
+    const container = document.getElementById("photos");
+    const tpl = document.getElementById("cardTpl");
+
+    function renderSkeleton(n = 6) {
+      container.innerHTML = "";
+      for (let i = 0; i < n; i++) {
+        container.appendChild(tpl.content.cloneNode(true));
       }
-      container.innerHTML = photos.map(photo => `
-        <div class="bg-violet-800 rounded-lg p-4 flex flex-col items-center">
-          <img src="${photo.url}" alt="${photo.title}" class="w-64 h-64 object-cover rounded mb-2 border border-violet-400" />
-          <div class="font-semibold">${photo.title || "Untitled"}</div>
-        </div>
-      `).join("");
     }
+
+    async function loadPhotos() {
+      renderSkeleton();
+      try {
+        const res = await fetch(API_URL, { cache: "no-store" });
+        if (!res.ok) throw new Error("Failed to fetch photos");
+        const photos = await res.json();
+        if (!Array.isArray(photos) || photos.length === 0) {
+          container.innerHTML = "<div class='text-white/70'>No photos uploaded yet.</div>";
+          return;
+        }
+        container.innerHTML = photos.map(photo => `
+          <div class='bg-white/5 border border-white/10 rounded-2xl overflow-hidden shadow-xl'>
+            <div class='aspect-square bg-white/5'>
+              <img src='${photo.url}' alt='${photo.title || "Untitled"}' class='w-full h-full object-contain' />
+            </div>
+            <div class='p-4'>
+              <div class='font-semibold truncate'>${photo.title || "Untitled"}</div>
+            </div>
+          </div>
+        `).join("");
+      } catch (err) {
+        container.innerHTML = `<div class='text-red-300'>Error loading photos: ${err.message}</div>`;
+      }
+    }
+
     loadPhotos();
   </script>
 </body>
+
 </html>
