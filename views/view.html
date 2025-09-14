@@ -1,51 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Upload Photo</title>
+  <title>View Photos</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-
-<body class="bg-violet-900 min-h-screen flex flex-col items-center justify-center py-8 text-white">
-
-  <h1 class="text-3xl font-bold mb-6">Upload Photos</h1>
-
-  <form id="uploadForm" class="flex flex-col items-center gap-4">
-    <input type="text" id="title" placeholder="Photo Title (optional)" 
-           class="border rounded-lg p-2 w-64 text-black">
-    <input type="file" id="fileInput" accept="image/*" multiple 
-           class="border rounded-lg p-2 w-64 text-black" required>
-    <button type="submit"
-      class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition">Upload</button>
-  </form>
-
+<body class="bg-violet-900 min-h-screen flex flex-col items-center py-8 text-white">
+  <h1 class="text-3xl font-bold mb-6">Uploaded Photos</h1>
+  <div id="photos" class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl"></div>
+  <a href="upload.html" class="mt-8 underline text-purple-300 hover:text-purple-100">Upload More Photos</a>
   <script>
-    const API_URL = "https://own-api-bee4.onrender.com/photos";
-
-    document.getElementById("uploadForm").addEventListener("submit", async e => {
-      e.preventDefault();
-      const title = document.getElementById("title").value || "Untitled";
-      const files = document.getElementById("fileInput").files;
-      if (!files.length) return alert("Select at least one file");
-
-      for (let file of files) {
-        const reader = new FileReader();
-        reader.onloadend = async () => {
-          await fetch(API_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ title, url: reader.result })
-          });
-        };
-        reader.readAsDataURL(file);
+    const API_URL = "/photos";
+    async function loadPhotos() {
+      const res = await fetch(API_URL);
+      const photos = await res.json();
+      const container = document.getElementById("photos");
+      if (!photos.length) {
+        container.innerHTML = "<p class='text-center col-span-3'>No photos uploaded yet.</p>";
+        return;
       }
-
-      // redirect after uploading all
-      setTimeout(() => window.location.href = "view.html", 1500);
-    });
+      container.innerHTML = photos.map(photo => `
+        <div class="bg-violet-800 rounded-lg p-4 flex flex-col items-center">
+          <img src="${photo.url}" alt="${photo.title}" class="w-64 h-64 object-cover rounded mb-2 border border-violet-400" />
+          <div class="font-semibold">${photo.title || "Untitled"}</div>
+        </div>
+      `).join("");
+    }
+    loadPhotos();
   </script>
-
 </body>
 </html>

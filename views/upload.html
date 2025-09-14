@@ -13,16 +13,14 @@
   <h1 class="text-3xl font-bold mb-6">Upload Photos</h1>
 
   <form id="uploadForm" class="flex flex-col items-center gap-4">
-    <input type="text" id="title" placeholder="Photo Title (optional)" 
-           class="border rounded-lg p-2 w-64 text-black">
-    <input type="file" id="fileInput" accept="image/*" multiple 
-           class="border rounded-lg p-2 w-64 text-black" required>
+    <input type="text" id="title" placeholder="Photo Title (optional)" class="border rounded-lg p-2 w-64 text-black">
+    <input type="file" id="fileInput" accept="image/*" multiple class="border rounded-lg p-2 w-64 text-black" required>
     <button type="submit"
       class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition">Upload</button>
   </form>
 
   <script>
-    const API_URL = "https://own-api-bee4.onrender.com/photos";
+    const API_URL = "/photos"; // Use relative URL for local/prod
 
     document.getElementById("uploadForm").addEventListener("submit", async e => {
       e.preventDefault();
@@ -48,4 +46,5 @@
   </script>
 
 </body>
+
 </html>
